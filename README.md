@@ -170,7 +170,7 @@ npm run web          # browser preview (uses localStorage + Web Speech)
 
 ```bash
 npm run typecheck    # tsc --noEmit
-npm test             # jest: 78 tests (skill model, scheduler, planner, adaptation, duplicate
+npm test             # jest: 80 tests (skill model, scheduler, planner, adaptation, duplicate
                      # detection, critic, bulk generation of 400+ questions, full sessions,
                      # 14-day simulation, backend pipeline with a scripted LLM)
 npm run simulate -- 14 7   # offline 14-day novelty/distribution/tracking report
@@ -242,4 +242,5 @@ tests/              jest suites        scripts/simulate.ts  offline simulator
 - No Part 1 (photos) and no "look at the graphic" Part 3/4 items yet. `visual_information_linking` is tracked but not trained.
 - Readiness shows objective indicators only; there is deliberately no predicted TOEIC score.
 - Single-user, local-first: no cloud sync yet. Data lives on the device, and "reset" wipes it.
-- A session interrupted by killing the app keeps its answers (skills update) but is not resumable.
+- A session interrupted by killing the app is not resumable mid-way. Its answers are kept, and it is summarised into History on the next launch.
+- "Multi-passage" (Part 7 double/triple passages) is tracked as a skill but only trained through single-passage inference items.

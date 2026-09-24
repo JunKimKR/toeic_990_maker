@@ -512,6 +512,37 @@ export function finishSession(data: AppData, rt: SessionRuntime, now: number, si
   return s;
 }
 
+/**
+ * Sessions interrupted by closing the app: their answers are already saved and
+ * counted in the skill model; give them an end time and a summary so they show
+ * up in History and count toward the streak.
+ */
+export function closeOrphanSessions(data: AppData, now: number, sink: PersistSink = {}): number {
+  let closed = 0;
+  for (const s of data.sessions) {
+    if (s.endedAt) continue;
+    const atts = data.attempts.filter((a) => a.sessionId === s.id);
+    if (!atts.length) continue;
+    const endedAt = atts[atts.length - 1].at;
+    const after: Partial<Record<SkillId, number>> = {};
+    for (const id of SKILL_IDS) after[id] = masteryFromTheta(data.skills[id].theta);
+    s.endedAt = endedAt;
+    s.masteryAfter = after;
+    s.summary = summarizeSession(atts, s.masteryBefore, after, s.startedAt, endedAt, [], ['중단된 세션 (자동 저장)']);
+    const day = dayKey(endedAt);
+    const st = data.profile.streak;
+    if (atts.length >= 5 && st.lastDay !== day && (!st.lastDay || st.lastDay < day)) {
+      st.current = st.lastDay === dayKey(endedAt - DAY_MS) ? st.current + 1 : 1;
+      st.best = Math.max(st.best, st.current);
+      st.lastDay = day;
+      sink.profile?.(data.profile);
+    }
+    sink.session?.(s);
+    closed++;
+  }
+  return closed;
+}
+
 /** Items of a question that should be asked in the given mode. */
 export function itemsForMode(q: Question, mode: TrainingMode): QuestionItem[] {
   return mode === 'exam' ? q.items.filter((i) => !i.trainingOnly) : q.items;

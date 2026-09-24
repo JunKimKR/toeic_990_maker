@@ -13,6 +13,7 @@ import { poolDeficits, requestBatch } from '../services/aiClient';
 import {
   advance,
   AnswerFeedback,
+  closeOrphanSessions,
   AnswerInput,
   AppData,
   currentQuestion,
@@ -95,6 +96,7 @@ export const useApp: UseBoundStore<StoreApi<AppState>> = create<AppState>((set, 
     try {
       await repo.init();
       const data = await repo.load();
+      closeOrphanSessions(data, Date.now(), sink());
       set({ data, ready: true, ai: { state: data.profile.settings.apiBaseUrl ? 'idle' : 'off' } });
       get().refreshPlan();
       // warm the AI pool in the background (never blocks the UI)

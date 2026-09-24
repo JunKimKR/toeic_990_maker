@@ -1,7 +1,7 @@
 import { DAY_MS } from '../src/domain/rng';
 import { masteryFromTheta } from '../src/domain/skillModel';
 import { ETS_CATEGORIES } from '../src/domain/skills';
-import { advance, createInitialData, currentQuestion, finishSession, itemsForMode, planToday, reviewQueue, startSession, submitAnswer } from '../src/services/engine';
+import { advance, closeOrphanSessions, createInitialData, currentQuestion, finishSession, itemsForMode, planToday, reviewQueue, startSession, submitAnswer } from '../src/services/engine';
 import { simulateDays } from '../src/services/simulation';
 
 const NOW = Date.UTC(2026, 3, 1, 9);
@@ -116,5 +116,42 @@ describe('two weeks of use (synthetic learner)', () => {
     const mae = errs.reduce((a, e) => a + Math.abs(e), 0) / errs.length;
     expect(mae).toBeLessThan(6);
     for (const e of errs) expect(Math.abs(e)).toBeLessThan(13);
+  });
+});
+
+describe('exam mode and interrupted sessions', () => {
+  it('exam sessions use TOEIC order and never show training-only items', () => {
+    const data = createInitialData(NOW, { ...ETS_CATEGORIES });
+    const rt = startSession(data, planToday(data, NOW, 'exam'), NOW, {}, 8);
+    let t = NOW;
+    const parts: string[] = [];
+    for (let g = 0; g < 100; g++) {
+      const cur = currentQuestion(data, rt, t);
+      if (!cur) break;
+      parts.push(cur.question.part);
+      const items = itemsForMode(cur.question, 'exam');
+      expect(items.every((i) => !i.trainingOnly)).toBe(true);
+      if (cur.question.part === 'P3' || cur.question.part === 'P4') expect(items).toHaveLength(3);
+      for (const item of items) submitAnswer(data, rt, { question: cur.question, item, selectedIndex: item.answerIndex, responseMs: 15000, plays: 1, confidence: null, answerChanges: 0, firstChoiceWasCorrect: true }, (t += 15000));
+      advance(data, rt, t);
+    }
+    expect(parts[0]).toBe('P2');
+    expect(parts.lastIndexOf('P2')).toBeLessThan(parts.indexOf('P5'));
+    const s = finishSession(data, rt, t);
+    expect(s.mode).toBe('exam');
+  });
+  it('an interrupted session is summarised on next launch', () => {
+    const data = createInitialData(NOW, { ...ETS_CATEGORIES });
+    const rt = startSession(data, planToday(data, NOW), NOW, {}, 9);
+    data.sessions.push(rt.session); // persisted at start by the sink in the app
+    let t = NOW;
+    for (let g = 0; g < 4; g++) {
+      const cur = currentQuestion(data, rt, t)!;
+      for (const item of itemsForMode(cur.question, 'training')) submitAnswer(data, rt, { question: cur.question, item, selectedIndex: item.answerIndex, responseMs: 9000, plays: 1, confidence: 2, answerChanges: 0, firstChoiceWasCorrect: true }, (t += 9000));
+      advance(data, rt, t);
+    }
+    expect(closeOrphanSessions(data, t + 3600_000)).toBe(1);
+    expect(data.sessions[0].summary?.items).toBeGreaterThan(3);
+    expect(data.profile.streak.current).toBe(1);
   });
 });
