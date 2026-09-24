@@ -157,6 +157,9 @@ export function buildBlueprint(input: PlannerInput): TrainingBlueprint {
     // format diversity for equally useful sets (P3 vs P4 both train intent/gist)
     const sameCount = partHistory.filter((p) => p === c.part).length;
     sc *= 1 - Math.min(0.3, 0.05 * sameCount);
+    // content capacity: the offline Part 4 grammar is smaller than Part 3's,
+    // so prefer P3 slightly when both train the same skills (TOEIC ratio is ~13:10 anyway)
+    if (c.part === 'P4') sc *= 0.88;
     // small preference for the primary skill's own remaining share
     sc += 0.05 * Math.min(1, (remaining.get(c.primary) ?? 0) / 120);
     return sc;

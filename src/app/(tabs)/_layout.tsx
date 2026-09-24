@@ -14,8 +14,9 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: p.text,
         tabBarInactiveTintColor: p.text3,
-        tabBarStyle: { backgroundColor: p.bg, borderTopColor: p.border, borderTopWidth: StyleSheet.hairlineWidth, height: 62 + insets.bottom, paddingTop: 6, paddingBottom: insets.bottom + 8 },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', lineHeight: 16, paddingBottom: 2 },
+        tabBarStyle: { backgroundColor: p.bg, borderTopColor: p.border, borderTopWidth: StyleSheet.hairlineWidth, height: 64 + insets.bottom, paddingTop: 4, paddingBottom: insets.bottom + 6 },
+        tabBarItemStyle: { height: 54 },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Today', tabBarIcon: ({ color }) => <IconToday color={String(color)} /> }} />

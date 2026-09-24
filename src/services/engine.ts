@@ -437,6 +437,8 @@ export function submitAnswer(data: AppData, rt: SessionRuntime | null, a: Answer
   const unsure = a.confidence === 0;
   for (const w of q.vocabularyTargets) {
     const entry = VOCAB_BY_WORD[w];
+    // only track words the engine can re-teach in new contexts/formats
+    if (!entry) continue;
     const existing = data.vocab[w];
     const format = item.subskill.startsWith('vocab_') ? item.subskill.replace('vocab_', '') : 'context';
     if (existing) {
@@ -444,7 +446,7 @@ export function submitAnswer(data: AppData, rt: SessionRuntime | null, a: Answer
       sink.vocab?.(data.vocab[w]);
     } else if (!correct || slow || unsure) {
       const context = (q.passage ?? item.stem).slice(0, 200);
-      const created = newVocabItem(w, entry?.ko ?? '', entry?.pos ?? '', context, entry?.colloc ?? [], entry?.level ?? 3, !correct ? 'wrong' : unsure ? 'unsure' : 'slow', now);
+      const created = newVocabItem(w, entry.ko, entry.pos, context, entry.colloc, entry.level, !correct ? 'wrong' : unsure ? 'unsure' : 'slow', now);
       data.vocab[w] = recordVocabEncounter(created, { correct, slow, unsure, format }, now);
       sink.vocab?.(data.vocab[w]);
     }

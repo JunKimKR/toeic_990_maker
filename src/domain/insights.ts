@@ -46,7 +46,7 @@ export function summarizeSession(
     .map((s) => ({ skill: s, before: before[s]!, after: after[s]! }))
     .filter((d) => Math.abs(d.after - d.before) >= 0.05)
     .sort((a, b) => b.after - b.before - (a.after - a.before));
-  const biggestGain = deltas.length && deltas[0].after > deltas[0].before ? deltas[0] : null;
+  const biggestGain = deltas.length && deltas[0].after - deltas[0].before >= 0.5 ? deltas[0] : null;
   const wrong = attempts.filter((a) => !a.correct);
   const topCauses = countBy(wrong.flatMap((a) => a.mistakeCauses.slice(0, 1))).slice(0, 3).map((c) => ({ cause: c.key, count: c.count }));
   const topTraps = countBy(wrong.map((a) => a.chosenDistractorType).filter((x): x is DistractorType => !!x))

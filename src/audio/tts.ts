@@ -136,7 +136,9 @@ export class RemoteTtsProvider implements TtsProvider {
 
   private url(line: ScriptLine, rate: number) {
     const voice = `${line.speaker}-${line.accent ?? 'us'}`;
-    return `${this.baseUrl.replace(/\/$/, '')}/v1/tts?voice=${encodeURIComponent(voice)}&rate=${rate}&text=${encodeURIComponent(line.text)}`;
+    const [base, q] = this.baseUrl.split('?');
+    const token = new URLSearchParams(q ?? '').get('token');
+    return `${base.replace(/\/$/, '')}/v1/tts?voice=${encodeURIComponent(voice)}&rate=${rate}&text=${encodeURIComponent(line.text)}${token ? `&token=${encodeURIComponent(token)}` : ''}`;
   }
 
   play(lines: ScriptLine[], opts: PlayOptions, cb: PlaybackCallbacks): () => void {

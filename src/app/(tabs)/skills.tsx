@@ -30,7 +30,7 @@ export default function Skills() {
       </T>
       <Segmented options={[{ label: 'Listening', value: 'LC' }, { label: 'Reading', value: 'RC' }]} value={sec} onChange={setSec} />
       <View style={{ alignItems: 'center', marginVertical: space.m }}>
-        <Radar labels={radarIds.map((s) => SKILLS[s].label.replace('Extended', 'Ext').replace('Speaker ', ''))} values={radarIds.map((s) => views[s].masteryScore)} size={280} />
+        <Radar labels={radarIds.map((s) => SKILLS[s].label.replace('Extended', 'Ext').replace('Speaker ', '').replace('LC ', '').replace('RC ', '').replace('Specific Info', 'Specific').replace('Cross-Sentence', 'Cross-sent.').replace('Implied Meaning', 'Implied'))} values={radarIds.map((s) => views[s].masteryScore)} size={280} />
       </View>
       <T v="small" c="text3">
         점수 = 표준 난도(TOEIC 평균 수준) 문항의 예상 정답률. 회색 띠 = 추정 불확실성, 파란 눈금 = 990 목표선.

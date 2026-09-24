@@ -52,7 +52,7 @@ export function Radar({ labels, values, size = 240 }: { labels: string[]; values
   const p = usePalette();
   const n = labels.length;
   const c = size / 2;
-  const r = c - 34;
+  const r = c - 52;
   const pt = (i: number, v: number) => {
     const a = (Math.PI * 2 * i) / n - Math.PI / 2;
     return [c + Math.cos(a) * r * (v / 100), c + Math.sin(a) * r * (v / 100)];
@@ -67,9 +67,9 @@ export function Radar({ labels, values, size = 240 }: { labels: string[]; values
         const [x, y] = pt(i, 100);
         return <Line key={i} x1={c} y1={c} x2={x} y2={y} stroke={p.border} strokeWidth={1} />;
       })}
-      <Polygon points={values.map((v, i) => pt(i, Math.max(40, v) === v ? v : 40).join(',')).join(' ')} fill={p.accent} fillOpacity={0.18} stroke={p.accent} strokeWidth={2} />
+      <Polygon points={values.map((v, i) => pt(i, Math.max(40, v)).join(',')).join(' ')} fill={p.accent} fillOpacity={0.18} stroke={p.accent} strokeWidth={2} />
       {labels.map((l, i) => {
-        const [x, y] = pt(i, 118);
+        const [x, y] = pt(i, 122);
         return (
           <SvgText key={l} x={x} y={y + 4} fontSize={10} fill={p.text2} textAnchor="middle">
             {l}

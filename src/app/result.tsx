@@ -20,7 +20,7 @@ export default function Result() {
     );
   }
   const r = s.summary;
-  const gains = r.skillDeltas.filter((d) => Math.abs(d.after - d.before) >= 0.3).slice(0, 6);
+  const gains = r.skillDeltas.filter((d) => Math.abs(d.after - d.before) >= 0.5).sort((a, b) => Math.abs(b.after - b.before) - Math.abs(a.after - a.before)).slice(0, 6);
   return (
     <Screen bottom={<Button testID="done" title="홈으로" onPress={() => router.replace('/')} />}>
       <T v="label" c="text3">
@@ -48,7 +48,7 @@ export default function Result() {
           <Card>
             <T v="h">{SKILLS[r.biggestGain.skill].label}</T>
             <T v="num" style={{ marginTop: 4 }}>
-              {r.biggestGain.before.toFixed(0)} → {r.biggestGain.after.toFixed(0)}
+              {r.biggestGain.before.toFixed(1)} → {r.biggestGain.after.toFixed(1)}
             </T>
           </Card>
         </>
@@ -79,7 +79,7 @@ export default function Result() {
               <Row key={d.skill} style={{ justifyContent: 'space-between', paddingVertical: 4 }}>
                 <T>{SKILLS[d.skill].label}</T>
                 <T v="h" c={d.after >= d.before ? 'good' : 'bad'} style={{ fontVariant: ['tabular-nums'] }}>
-                  {d.before.toFixed(0)} → {d.after.toFixed(0)}
+                  {d.before.toFixed(1)} → {d.after.toFixed(1)}
                 </T>
               </Row>
             ))}

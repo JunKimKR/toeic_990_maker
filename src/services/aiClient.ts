@@ -26,6 +26,13 @@ export interface AiBatchResult {
   error?: string;
 }
 
+/** Base URL may carry an optional access token: https://host?token=abc */
+export function splitBase(baseUrl: string): { base: string; token: string } {
+  const [b, q] = baseUrl.split('?');
+  const token = new URLSearchParams(q ?? '').get('token') ?? '';
+  return { base: b.replace(/\/$/, ''), token };
+}
+
 async function fetchWithTimeout(url: string, init: RequestInit, ms: number): Promise<Response> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
@@ -39,7 +46,8 @@ async function fetchWithTimeout(url: string, init: RequestInit, ms: number): Pro
 export async function checkBackend(baseUrl: string): Promise<{ ok: boolean; provider?: string; tts?: string; error?: string }> {
   if (!baseUrl) return { ok: false, error: 'no url' };
   try {
-    const r = await fetchWithTimeout(`${baseUrl.replace(/\/$/, '')}/v1/health`, {}, 6000);
+    const { base, token } = splitBase(baseUrl);
+    const r = await fetchWithTimeout(`${base}/v1/health`, { headers: token ? { 'x-app-token': token } : {} }, 6000);
     if (!r.ok) return { ok: false, error: `HTTP ${r.status}` };
     const j = await r.json();
     return { ok: true, provider: j.provider, tts: j.tts };
@@ -71,9 +79,10 @@ export function acceptRemote(q: Question, now: number): Question | null {
 
 export async function requestBatch(baseUrl: string, specs: GenSpec[], avoid: { reasoningPaths: string[]; topics: string[] }, now = Date.now()): Promise<AiBatchResult> {
   try {
+    const { base, token } = splitBase(baseUrl);
     const r = await fetchWithTimeout(
-      `${baseUrl.replace(/\/$/, '')}/v1/generate`,
-      { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ specs, avoid }) },
+      `${base}/v1/generate`,
+      { method: 'POST', headers: { 'content-type': 'application/json', ...(token ? { 'x-app-token': token } : {}) }, body: JSON.stringify({ specs, avoid }) },
       90_000,
     );
     if (!r.ok) return { accepted: [], rejected: 0, error: `HTTP ${r.status}` };

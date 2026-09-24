@@ -10,8 +10,8 @@
  *      theta += K * f * (y - P)          y = 1 if correct else 0
  *    where f is a fluency factor from the *performance credit*: a fast,
  *    first-listen, confident correct answer raises mastery more than a
- *    correct answer after 3 replays or with "확신 없음" (f 0.6 .. 1.1);
- *    confident-wrong answers (possible misconceptions) use f = 1.2.
+ *    correct answer after 3 replays or with "확신 없음" (f 0.65 .. 1.12);
+ *    confident-wrong answers (possible misconceptions) use f = 1.1.
  *  - K shrinks as sigma shrinks (more evidence => smaller steps), sigma grows
  *    again with inactivity (skills can decay / estimates get stale).
  */
@@ -23,6 +23,7 @@ export const DIFFICULTY_LOGIT: Record<Difficulty, number> = { 1: -1.6, 2: -0.8, 
 
 export const SIGMA_MIN = 0.3; // never fully certain: people keep learning / forgetting
 export const SIGMA_MAX = 1.0;
+const PROCESS_NOISE = 0.004;
 const RECENT_N = 20;
 const RT_N = 30;
 const EWMA_ALPHA = 0.15;
@@ -179,12 +180,14 @@ export function updateSkill(state: SkillState, o: Observation): { state: SkillSt
   // honest "expected accuracy"). Fluency signals change only the step size:
   // fast first-listen correct answers move mastery up more, replayed/slow/unsure
   // correct answers move it up less, confident errors pull it down harder.
-  const fluency = o.correct ? clamp(1 + 0.6 * (o.credit - 0.85), 0.6, 1.1) : o.misconception ? 1.2 : 1;
+  const fluency = o.correct ? clamp(1 + 0.6 * (o.credit - 0.8), 0.65, 1.12) : o.misconception ? 1.1 : 1;
   const k = stepSize(state.sigma, p) * w * fluency;
   let theta = state.theta + k * ((o.correct ? 1 : 0) - p);
   theta = Math.min(theta, logit(MAX_MASTERY));
   // Bayesian information update of the uncertainty
-  const s2 = 1 / (1 / (state.sigma * state.sigma) + w * p * (1 - p));
+  // information gain, plus a little process noise: ability is a moving target
+  // (the learner keeps improving), so the estimate must never freeze
+  const s2 = 1 / (1 / (state.sigma * state.sigma) + w * p * (1 - p)) + PROCESS_NOISE * w;
   const sigma = clamp(Math.sqrt(s2), SIGMA_MIN, SIGMA_MAX);
 
   const next: SkillState = { ...state, theta, sigma };
